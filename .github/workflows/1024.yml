@@ -1,0 +1,41 @@
+name: 1024-AutoReply
+
+on:
+  workflow_dispatch: # 手动触发
+  push:
+    branches:
+      - Multi_User
+  schedule:
+    - cron: '34 23 * * *'
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: checkout actions
+      run : |
+        sudo apt-get update
+        sudo apt-get -y install git
+        sudo apt-get -y install python3-pip
+        sudo apt-get -y install python3-setuptools
+
+    - name: install env
+      run :
+
+        pip3 install requests onetimepass pillow
+
+    - name: run 1024.py
+      env:
+        USER: ${{ secrets.USER }}
+        PASSWORD: ${{ secrets.PASSWORD }}
+        SECRET: ${{ secrets.SECRET }}
+        TOKER: ${{ secrets.TOKER }}
+        CODEUSER: ${{ secrets.CODEUSER }}
+        CODEPASS: ${{ secrets.CODEPASS }}
+        USERID: ${{ secrets.USERID }}
+        APIKEY: ${{ secrets.APIKEY }}
+      run:
+        python3 1024.py
