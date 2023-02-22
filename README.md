@@ -20,6 +20,6 @@ PASSWORD         密码
 SECRET           谷歌身份验证器密钥
 ```
 
-Actions 然后 `Run workdlow` 即可手动触发执行一次，后续除非是调试，都可以自动执行。
+`Run workdlow` 即可手动触发执行一次，后续除非是调试，都可以自动执行。
 
  `getreply()中的reply`设置回复内容,`sleeptime` 设置为(1024,2048)之间，Actions一个项目限制6个小时，所以最大值不要超过2048。
