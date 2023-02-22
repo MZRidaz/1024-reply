@@ -1,4 +1,4 @@
-name: 1024-AutoReply
+name: Reply
 
 on:
   workflow_dispatch: # 手动触发
