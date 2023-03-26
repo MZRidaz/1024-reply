@@ -306,7 +306,7 @@ class Autoreply:
         like_flag = False
         suc=False
         print('第'+str(ge+1)+'个账号开始时发表帖子:'+m)
-        while n<10 and suc is False:
+        while n<30 and suc is False:
             try:
                 au=''
                 print('第'+str(ge+1)+'个账号当前在回复第'+str(n+1)+'个。')
