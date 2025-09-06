@@ -8,26 +8,21 @@ on:
   schedule:
     - cron: '34 23 * * *'
 
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     
-    - name: checkout actions
-      run : |
+    - name: Install system dependencies
+      run: |
         sudo apt-get update
-        sudo apt-get -y install git
-        sudo apt-get -y install python3-pip
-        sudo apt-get -y install python3-setuptools
+        sudo apt-get -y install git python3-pip python3-setuptools
 
-    - name: install env
-      run :
+    - name: Install Python packages
+      run: pip3 install requests onetimepass pillow
 
-        pip3 install requests onetimepass pillow
-
-    - name: run 1024.py
+    - name: Run 1024.py script
       env:
         USER: ${{ secrets.USER }}
         PASSWORD: ${{ secrets.PASSWORD }}
@@ -37,5 +32,4 @@ jobs:
         CODEPASS: ${{ secrets.CODEPASS }}
         USERID: ${{ secrets.USERID }}
         APIKEY: ${{ secrets.APIKEY }}
-      run:
-        python3 1024.py
+      run: python3 1024.py
