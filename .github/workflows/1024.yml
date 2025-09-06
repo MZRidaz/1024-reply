@@ -1,28 +1,31 @@
 name: Reply
 
 on:
-  workflow_dispatch: # 手动触发
+  # 可手动触发
+  workflow_dispatch: 
   push:
     branches:
       - Multi_User
   schedule:
-    - cron: '34 23 * * *'
+    - cron: '34 23 * * *' # 每晚 23:34 定时运行
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Install system dependencies
+    - name: 检出代码
+      uses: actions/checkout@v3
+
+    - name: 安装系统依赖
       run: |
         sudo apt-get update
         sudo apt-get -y install git python3-pip python3-setuptools
 
-    - name: Install Python packages
+    - name: 安装 Python 包
       run: pip3 install requests onetimepass pillow
 
-    - name: Run 1024.py script
+    - name: 执行脚本
       env:
         USER: ${{ secrets.USER }}
         PASSWORD: ${{ secrets.PASSWORD }}
