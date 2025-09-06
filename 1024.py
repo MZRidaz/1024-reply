@@ -416,10 +416,3 @@ if __name__ == "__main__":
     p.join()
     print(res.get())          #查看错误信息
     print('完成')
-
-config.py代码如下：
-config={
-    'Forbid':True,
-    'Input_self':False,
-    'like':True,
-}
