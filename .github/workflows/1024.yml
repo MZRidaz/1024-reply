@@ -6,24 +6,23 @@ on:
     branches:
       - Multi_User
   schedule:
-    - cron: '34 23 * * *' # 每晚 23:34 运行
+    - cron: '34 23 * * *'
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
-
-    - name: 安装系统依赖
+    
+    - name: Install system dependencies
       run: |
         sudo apt-get update
         sudo apt-get -y install git python3-pip python3-setuptools
 
-    - name: 安装 Python 依赖包
+    - name: Install Python packages
       run: pip3 install requests onetimepass pillow
 
-    - name: 运行主脚本
+    - name: Run 1024.py script
       env:
         USER: ${{ secrets.USER }}
         PASSWORD: ${{ secrets.PASSWORD }}
