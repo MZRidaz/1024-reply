@@ -1,114 +1,72 @@
 import requests
-import re
 import random
+import re
 import os
-import pickle
 import json
-import onetimepass as otp
+import pickle
 from time import sleep
-from config import config
 from getver import GetVerificationCode
+from config import config
 
-
-class AutoReply:
-    USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36"
+class Autoreply:
+    USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/90.0.4430.212 Safari/537.36"
     LOGIN_URL = 'https://t66y.com/login.php'
     THREAD_URL = 'https://t66y.com/thread0806.php?fid=7&search=today'
-
-    HEADERS = {
-        'Host': 't66y.com',
-        'Proxy-Connection': 'keep-alive',
-        'Referer': 'https://t66y.com/index.php',
-        'Upgrade-Insecure-Requests': '1',
-        'User-Agent': USER_AGENT
-    }
-    LOGIN_HEADERS = {
-        'Host': 't66y.com',
-        'Proxy-Connection': 'keep-alive',
-        'Referer': 'https://t66y.com/login.php',
-        'User-Agent': USER_AGENT
-    }
 
     def __init__(self, user, password, secret):
         self.user = user
         self.password = password
         self.secret = secret
         self.session = requests.Session()
-        self.cookies = None
 
     def login(self):
-        """用户登录，包括验证码和两步验证流程"""
+        # 用户登录
+        data = {'pwuser': self.user, 'pwpwd': self.password, 'step': '2'}
+        response = self.session.post(self.LOGIN_URL, data=data)
+        content = response.content.decode('utf-8', 'ignore')
+        if '尝试次数过多' in content:
+            return "需输入验证码"
+        elif '验证' in content:
+            return self.two_factor_auth()
+        return "登录成功"
 
-        # 第一步登录动作
-        login_data = {
-            'pwuser': self.user,
-            'pwpwd': self.password,
-            'step': '2'
-        }
-
-        login_response = self.session.post(self.LOGIN_URL, data=login_data, headers=self.LOGIN_HEADERS)
-        response_content = login_response.content.decode('utf-8', 'ignore')
-
-        if '登录尝试次数过多' in response_content:
-            return "登录错误：次数过多，需要验证码"
-        elif '賬號已開啟兩步驗證' in response_content:
-            print("帐户启用了两步验证，正在请求验证码")
-            return self.two_factor_authentication()
-
-    def two_factor_authentication(self):
-        """完成两步验证"""
-        sleep(2)
-        token = otp.get_totp(self.secret)
-        auth_data = {'step': '2', 'cktime': '0', 'oneCode': str(token)}
-
-        login_response = self.session.post(self.LOGIN_URL, data=auth_data, headers=self.LOGIN_HEADERS)
-
-        with open(f"./{self.user}_cookies.pkl", 'wb') as cookie_file:
-            pickle.dump(login_response.cookies, cookie_file)
-
-        if '您已經順利登錄' in login_response.text:
-            self.cookies = login_response.cookies
-            return "登录成功"
+    def two_factor_auth(self):
+        # 两步验证
+        response = self.session.post(self.LOGIN_URL, data={'oneCode': "example_totp_code"})
+        if '顺利登录' in response.text:
+            return "登录完成"
 
     def fetch_today_threads(self):
-        """获取今天的帖子列表"""
-        response = self.session.get(self.THREAD_URL, headers=self.HEADERS)
-        content = response.content.decode('utf-8', 'ignore')
+        # 获取今日帖子
+        response = self.session.get(self.THREAD_URL)
+        pattern = r'htm_data/\w+/\w+/\w+.html'
+        return re.findall(pattern, response.text)
 
-        # 使用正则表达式匹配帖子链接
-        thread_pattern = r'htm_data/\w+/\w+/\w+.html'
-        threads = re.findall(thread_pattern, content)
-        return threads
-
-    def reply_to_thread(self, thread_url, message):
-        """自动回复帖子"""
-        reply_data = {
-            'message': message
-        }
-        reply_response = self.session.post(thread_url, data=reply_data, headers=self.HEADERS)
-        return reply_response.content.decode('utf-8', 'ignore')
+    def post_reply(self, thread_url, reply_content):
+        # 回帖
+        data = {'message': reply_content, 'action': 'reply'}
+        response = self.session.post(thread_url, data=data)
+        if '回复成功' in response.text:
+            return "回复成功"
+        return "回复失败"
 
     @staticmethod
-    def generate_random_message():
-        """生成随机回复内容"""
-        return f"感谢分享！支持！ -- {random.randint(1, 1000)}"
-
+    def generate_reply():
+        replies = ['感谢分享', '内容精彩', '学习了！', '赞一个', '很有帮助']
+        return random.choice(replies)
 
 if __name__ == "__main__":
-    # 环境变量读取
     user = os.getenv("USER")
     password = os.getenv("PASSWORD")
     secret = os.getenv("SECRET")
 
-    bot = AutoReply(user, password, secret)
-
+    bot = Autoreply(user, password, secret)
     login_status = bot.login()
-    print("登录状态:", login_status)
-
-    # 获取今日帖子
-    today_threads = bot.fetch_today_threads()
-    for thread in today_threads[:5]:  # 限制操作帖子的数量
-        print(f"回复帖子: {thread}")
-        message = AutoReply.generate_random_message()
-        bot.reply_to_thread(f'https://t66y.com/{thread}', message)
-        sleep(random.randint(10, 30))
+    if login_status == "需输入验证码":
+        GetVerificationCode.apitruecaptcha()  # 自动处理验证码
+    elif login_status == "登录成功":
+        threads = bot.fetch_today_threads()
+        for thread in threads:
+            reply = Autoreply.generate_reply()
+            print(bot.post_reply(thread, reply))
+            sleep(random.randint(5, 15))  # 防止频繁操作触发限制
